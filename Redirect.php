@@ -14,7 +14,8 @@ class Redirect
 
     //private function __construct(){}
 
-    public static function to($uri){
+    public static function to($uri)
+    {
         header("Location: http://$_SERVER[HTTP_HOST]$uri");
     }
 
