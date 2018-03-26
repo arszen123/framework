@@ -41,7 +41,7 @@ class View
         return self::renderHTML($path,['content'=>$content]);
     }
 
-    private static function renderHTML($path,$variables){
+    public static function renderHTML($path,$variables){
         foreach ($variables as $key => $variable){
             $$key = $variable;
         }

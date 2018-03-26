@@ -15,43 +15,45 @@ class Route
 
     public function __construct()
     {
-        $this->route['missingRoute']['controller'] = 'Framework\DefaultController@missingRouteController';
-        $this->route['methodNotSupported']['controller'] = 'Framework\DefaultController@methodNotSupported';
+        $this->route['missingRoute'] = 'Framework\DefaultController@missingRouteController';
+        $this->route['methodNotSupported']= 'Framework\DefaultController@methodNotSupported';
     }
 
-    public function get($route,$controller){
-        $this->setUpController($route,$controller,'get');
+    public function get($route, $controller)
+    {
+        $this->setUpController($route, $controller, 'get');
     }
 
-    public function post($route,$controller){
-        $this->setUpController($route,$controller,'post');
+    public function post($route, $controller)
+    {
+        $this->setUpController($route, $controller, 'post');
     }
 
-    public function any($route,$controller){
-        $this->setUpController($route,$controller,'any');
+    public function any($route, $controller)
+    {
+        $this->setUpController($route, $controller, 'any');
     }
 
-    public function controller(){
+    public function controller()
+    {
 
     }
 
-    private function setUpController($route,$controller,$method){
+    private function setUpController($route, $controller, $method)
+    {
         $this->trimRoute($route);
-        $this->setController($route,$controller);
-        $this->setMethod($route,$method);
+        $this->setUpNewController($route, $controller, $method);
     }
 
-    private function trimRoute(&$route){
-        $route = trim($route,'/');
-        $route = rtrim($route,'/');
+    private function trimRoute(&$route)
+    {
+        $route = trim($route, '/');
+        $route = rtrim($route, '/');
     }
 
-    private function setController($route,$controller){
-        $this->route[$route]['controller'] = $controller;
-    }
-
-    private function setMethod($route,$method = 'any'){
-        $this->route[$route]['method'] = $method;
+    private function setUpNewController($route, $controller, $methdo = 'any')
+    {
+        $this->route[$methdo][$route] = $controller;
     }
 
     /**

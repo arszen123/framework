@@ -19,27 +19,33 @@ class Router
         $this->route = $route;
     }
 
-    public function getController($route,$method){
+    public function getController($route, $method)
+    {
         $this->trimRoute($route);
-        if(empty($this->route[$route]))
-            return $this->route['missingRoute'];
-        if($this->route[$route]['method'] === 'any' ||
-            $this->route[$route]['method'] === strtolower($method)
-        ){
-            return $this->route[$route];
+        if (isset($this->route['any'][$route])) {
+            return $this->route['any'][$route];
         }
+        if (isset($this->route[strtolower($method)][$route])) {
+            return $this->route[strtolower($method)][$route];
+        }
+
+        // always true
+        if (!isset($this->route[$method][$route]))
+            return $this->route['missingRoute'];
         return $this->route['methodNotSupported'];
     }
 
-    private function trimRoute(&$route){
-        $route = trim($route,'/');
-        $route = rtrim($route,'/');
+    private function trimRoute(&$route)
+    {
+        $route = ltrim($route, '/');
+        //$route = rtrim($route, '/');
     }
 
-    private function shortenUri($uri){
-        $tmpUri = explode('/',$uri);
+    private function shortenUri($uri)
+    {
+        $tmpUri = explode('/', $uri);
         $lastValue = array_pop($tmpUri);
-        $uri = implode('/',$tmpUri);
+        $uri = implode('/', $tmpUri);
         echo $uri;
     }
 }
