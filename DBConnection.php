@@ -27,15 +27,21 @@ class DBConnection
 
     protected $valid;
 
+    protected $key;
+
     public static function initConnection($path)
     {
         self::$path = $path;
     }
 
-    private function openConnection($type)
+    private function openConnection($type, $tmp = false)
     {
-        var_dump(self::$path .'/' . $this->fileName);
-        $this->file = fopen(self::$path .'/' . $this->fileName, $type);
+        if (!$tmp) {
+            $this->file = fopen(self::$path . '/' . $this->fileName, $type);
+        } else {
+            $date = new \DateTime();
+            $this->file = fopen(self::$path . '/' . $date->getTimestamp() . '_' .$this->fileName, $type);
+        }
     }
 
     private function closeConnection()
@@ -45,25 +51,84 @@ class DBConnection
 
     public function save()
     {
+        $data = $this->getModelAsString($this);
         $this->openConnection('a');
-
-        $workCols = explode(',', $this->workCols);
-        $data = [];
-        foreach ($workCols as $col) {
-            $func = 'get' . ucfirst($col);
-            if ($col === 'password') {
-                $data[] = hash('sha256',$this->$func());
-            } else {
-                $data[] = $this->$func();
-            }
-        }
-        fwrite($this->file, implode(';', $data));
+        fwrite($this->file, $this->escape($data));
         fwrite($this->file, "\n");
 
         $this->closeConnection();
     }
 
-    public function getBy(array $cols)
+    private function getModelAsString($item)
+    {
+        $workCols = explode(',', $item->workCols);
+        $data = [];
+        foreach ($workCols as $col) {
+            $func = 'get' . ucfirst($col);
+            if ($col != $item->key || $item->$func() !== null) {
+                $data[] = $item->$func();
+            } else {
+                $data[] = $item->getLastRow()->$func() + 1;
+            }
+        }
+        return implode(';', $data);
+    }
+    public function update()
+    {
+        $allElement = $this->getBy();
+
+        $func = 'get' . ucfirst($this->key);
+
+        $this->openConnection('w');
+
+        foreach ($allElement as $element) {
+            if ($this->$func() === $element->$func()) {
+                fwrite($this->file, $this->escape($this->getModelAsString($this)));
+            } else {
+                fwrite($this->file, $this->escape($this->getModelAsString($element)));
+            }
+            fwrite($this->file, "\n");
+        }
+
+        $this->closeConnection();
+    }
+
+    public function getLastRow()
+    {
+        $this->openConnection('r');
+        $cursor = -1;
+        $line = '';
+        fseek($this->file, $cursor, SEEK_END);
+        $char = fgetc($this->file);
+
+        /**
+         * Trim trailing newline chars of the file
+         */
+        while ($char === "\n" || $char === "\r") {
+            fseek($this->file, $cursor--, SEEK_END);
+            $char = fgetc($this->file);
+        }
+
+        /**
+         * Read until the start of file or first newline char
+         */
+        while ($char !== false && $char !== "\n" && $char !== "\r") {
+            /**
+             * Prepend the new char
+             */
+            $line = $char . $line;
+            fseek($this->file, $cursor--, SEEK_END);
+            $char = fgetc($this->file);
+        }
+        $this->closeConnection();
+        if (strlen($line) > 0) {
+            return $this->getArrayAsModel(explode(',', $this->workCols),
+                explode(';', $line));
+        }
+        return new $this;
+    }
+
+    public function getBy(array $cols = array())
     {
         $this->openConnection('r');
 
@@ -80,7 +145,7 @@ class DBConnection
                 }
             }
             if (!$break) {
-               $result[] = $this->getArrayAsModel($realWorkCols, $data);
+                $result[] = $this->getArrayAsModel($realWorkCols, $data);
             }
         }
 
@@ -92,9 +157,16 @@ class DBConnection
     private function getArrayAsModel($workCols, $data)
     {
         $result = new $this;
-        for ($i=0;$i<count($workCols);$i++) {
+        for ($i = 0; $i < count($workCols); $i++) {
             $func = 'set' . ucfirst($workCols[$i]);
-            $result->$func($data[$i]);
+            if (method_exists($result, $func)) {
+                $result->$func($data[$i]);
+            } else {
+                $reflection = new \ReflectionClass($result);
+                $prop = $reflection->getProperty("id");
+                $prop->setAccessible(true);
+                $prop->setValue($result, $data[$i]);
+            }
         }
         return $result;
     }
@@ -113,14 +185,17 @@ class DBConnection
     public function validate()
     {
         foreach ($this->validator as $key => $item) {
+            $item .= '|';
             $validators = explode('|', $item);
-            if (!isset($this->$key) && in_array('required', $validators)) {
+            $func = 'get' . ucfirst($key);
+            if ($this->$func() === null && in_array('required', $validators)) {
                 $this->valid = false;
                 return;
             }
             if (in_array('email', $validators) && isset($this->$key)) {
                 $email = explode('@', $this->$key);
-                if (count($email) !== 2 || count(explode('.', $email[1])) !== 2) {
+                if (count($email) !== 2 || count(explode('.',
+                        $email[1])) !== 2) {
                     $this->valid = false;
                     return;
                 }
@@ -129,5 +204,9 @@ class DBConnection
         $this->valid = true;
     }
 
+    private function escape($str)
+    {
+        return preg_replace('/[^a-zA-Z0-9_ %\[\]\.\(\)%&-;\<\>]/s', '', $str);
+    }
 
 }

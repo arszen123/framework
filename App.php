@@ -2,6 +2,8 @@
 
 namespace Framework;
 
+use Model\User;
+
 class App
 {
 
@@ -11,6 +13,9 @@ class App
     public function __construct($config, $routes)
     {
         session_start();
+        if (!($_SESSION['loggedInUser'] instanceof User)) {
+            $_SESSION['loggedInUser'] = new User();
+        }
         $this->config = $config;
         $this->routes = $routes;
         Menu::setMenu($config['menu']);
@@ -19,7 +24,7 @@ class App
 
     public function run()
     {
-        $uriArray = explode('?', $_SERVER['REQUEST_URI'], 1);
+        $uriArray = explode('?', $_SERVER['REQUEST_URI'], 2);
         $this->setUpGetParams($_GET);
         $this->mapUrlToController($uriArray[0]);
     }
@@ -33,6 +38,7 @@ class App
 
     private function mapUrlToController($uri)
     {
+        echo $uri;
         $router = new Router($this->routes->getRoute());
         $route = $router->getController($uri, $_SERVER['REQUEST_METHOD']);
         $route = explode('@', $route);
