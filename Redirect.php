@@ -12,8 +12,10 @@ namespace Framework;
 class Redirect
 {
 
-    public static function to($uri){
-        header("Location: http://$_SERVER[HTTP_HOST]$uri");
+    public static function to($uri)
+    {
+        //TODO
+        header("Location: http://$_SERVER[HTTP_HOST]/ql0sz4$uri");
         return true;
     }
 

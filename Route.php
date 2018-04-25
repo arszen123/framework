@@ -16,7 +16,16 @@ class Route
     public function __construct()
     {
         $this->route['missingRoute'] = 'Framework\DefaultController@missingRouteController';
-        $this->route['methodNotSupported']= 'Framework\DefaultController@methodNotSupported';
+        $this->route['methodNotSupported'] = 'Framework\DefaultController@methodNotSupported';
+    }
+
+    public function missingRoute($controller)
+    {
+        $this->route['missingRoute'] = $controller;
+    }
+    public function methodNotSupported($controller)
+    {
+        $this->route['methodNotSupported'] = $controller;
     }
 
     public function get($route, $controller)

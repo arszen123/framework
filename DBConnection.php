@@ -40,7 +40,8 @@ class DBConnection
             $this->file = fopen(self::$path . '/' . $this->fileName, $type);
         } else {
             $date = new \DateTime();
-            $this->file = fopen(self::$path . '/' . $date->getTimestamp() . '_' .$this->fileName, $type);
+            $this->file = fopen(self::$path . '/' . $date->getTimestamp() . '_' . $this->fileName,
+                $type);
         }
     }
 
@@ -73,24 +74,26 @@ class DBConnection
         }
         return implode(';', $data);
     }
+
     public function update()
     {
         $allElement = $this->getBy();
 
         $func = 'get' . ucfirst($this->key);
 
-        $this->openConnection('w');
+        file_put_contents(self::$path . '/' . $this->fileName, '');
 
         foreach ($allElement as $element) {
             if ($this->$func() === $element->$func()) {
-                fwrite($this->file, $this->escape($this->getModelAsString($this)));
+                $this->openConnection('a');
+                fwrite($this->file,
+                    $this->escape($this->getModelAsString($this)));
+                fwrite($this->file, "\n");
+                $this->closeConnection();
             } else {
-                fwrite($this->file, $this->escape($this->getModelAsString($element)));
+                $element->save();
             }
-            fwrite($this->file, "\n");
         }
-
-        $this->closeConnection();
     }
 
     public function getLastRow()
@@ -206,7 +209,8 @@ class DBConnection
 
     private function escape($str)
     {
-        return preg_replace('/[^a-zA-Z0-9_ %\[\]\.\(\)%&-;\<\>]/s', '', $str);
+        return preg_replace('/[^a-zA-Z0-9_ %\[\]\.\(\)%&-;\<\>\{\}\"]/s', '',
+            $str);
     }
 
 }

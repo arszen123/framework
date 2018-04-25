@@ -23,8 +23,8 @@ class Menu
         $menu = self::$menu[$menu];
         $uri = explode('?', $_SERVER['REQUEST_URI'], 1)[0];
         $uri = trim($uri, '/');
-        //$menu[trim($uri,'/')]['class'] = 'active';
-        return View::renderHTML(__DIR__ . '/views/menu.php', ['menu' => $menu, 'uri' => $uri]);
+        return View::renderHTML(__DIR__ . '/views/menu.php',
+            ['menu' => $menu, 'uri' => $uri]);
     }
 
 }

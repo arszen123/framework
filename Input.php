@@ -13,13 +13,17 @@ class Input
 {
     private static $params;
 
-    private function __construct(){}
+    private function __construct()
+    {
+    }
 
-    public static function get($name){
+    public static function get($name)
+    {
         return self::$params[$name];
     }
 
-    public static function set($name,$value){
+    public static function set($name, $value)
+    {
         self::$params[$name] = $value;
     }
 

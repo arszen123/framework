@@ -38,13 +38,13 @@ class App
 
     private function mapUrlToController($uri)
     {
-        echo $uri;
         $router = new Router($this->routes->getRoute());
         $route = $router->getController($uri, $_SERVER['REQUEST_METHOD']);
         $route = explode('@', $route);
         $controller = $route[0];
-        if (strpos($route[0], 'Framework') === false)
+        if (strpos($route[0], 'Framework') === false) {
             $controller = $this->config['controller'] . '\\' . $route[0];
+        }
         $t = new $controller;
         echo $t->{$route[1]}();
     }
